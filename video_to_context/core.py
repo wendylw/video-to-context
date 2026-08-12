@@ -10,9 +10,12 @@ from .media import MediaTools
 
 
 PRESETS = {
-    "general": {"interval": 10.0, "max_frames": 12},
-    "ui-debug": {"interval": 2.0, "max_frames": 30},
+    "general": {"interval": 10.0, "max_frames": 12, "min_frames": 1},
+    "ui-debug": {"interval": 2.0, "max_frames": 30, "min_frames": 2},
 }
+DEFAULT_PRESET = "general"
+DEFAULT_INSPECT_FPS = 2.0
+DEFAULT_MAX_INSPECTION_FRAMES = 120
 
 
 class VideoContextError(RuntimeError):
@@ -22,7 +25,7 @@ class VideoContextError(RuntimeError):
 def analyze_video(
     video_path: Path,
     output_root: Path,
-    preset: str = "general",
+    preset: str = DEFAULT_PRESET,
     interval: Optional[float] = None,
     max_frames: Optional[int] = None,
     media_tools: Optional[MediaTools] = None,
@@ -45,11 +48,23 @@ def analyze_video(
     raw_probe = tools.probe(source)
     video_metadata = _video_metadata(raw_probe)
     duration = video_metadata["duration_seconds"]
-    timestamps = _overview_timestamps(duration, selected_interval, selected_max)
+    timestamps = _overview_timestamps(
+        duration,
+        selected_interval,
+        selected_max,
+        PRESETS[preset]["min_frames"],
+    )
 
     analysis_id = _analysis_id(source)
     source_stem = _safe_name(source.stem) or "video"
     bundle = output_root.expanduser().resolve() / f"{source_stem}-{analysis_id}"
+    inspections = []
+    detail_frames = []
+    if (bundle / "manifest.json").is_file():
+        previous_manifest = _read_manifest(bundle)
+        if previous_manifest.get("analysis_id") == analysis_id:
+            inspections = previous_manifest.get("inspections", [])
+            detail_frames = previous_manifest.get("detail_frames", [])
     frames_dir = bundle / "frames"
     frames_dir.mkdir(parents=True, exist_ok=True)
 
@@ -61,13 +76,7 @@ def analyze_video(
         absolute_path = bundle / relative_path
         tools.extract_frame(source, timestamp, absolute_path)
         frame_paths.append(absolute_path)
-        frame_records.append(
-            {
-                "timestamp_seconds": timestamp,
-                "timestamp": label,
-                "path": relative_path.as_posix(),
-            }
-        )
+        frame_records.append(_frame_record(timestamp, relative_path))
 
     contact_sheet = bundle / "contact-sheet.jpg"
     contact_sheet_layout = tools.create_contact_sheet(frame_paths, contact_sheet)
@@ -92,12 +101,11 @@ def analyze_video(
             "contact_sheet_layout": contact_sheet_layout,
             "frames": frame_records,
         },
-        "inspections": [],
-        "detail_frames": [],
+        "inspections": inspections,
+        "detail_frames": detail_frames,
     }
     bundle.mkdir(parents=True, exist_ok=True)
-    _write_json(bundle / "manifest.json", manifest)
-    (bundle / "report.md").write_text(_render_report(manifest), encoding="utf-8")
+    _persist_manifest(bundle, manifest)
 
     return {
         "analysis_id": analysis_id,
@@ -126,7 +134,7 @@ def inspect_video_range(
     start: float,
     end: float,
     fps: float,
-    max_frames: int = 120,
+    max_frames: int = DEFAULT_MAX_INSPECTION_FRAMES,
     media_tools: Optional[MediaTools] = None,
 ) -> Dict[str, Any]:
     """Add densely sampled frames for a time range to an existing bundle."""
@@ -173,13 +181,7 @@ def inspect_video_range(
             relative_directory / f"frame-{index + 1:03d}-{label.replace(':', '-')}.jpg"
         )
         tools.extract_frame(source, timestamp, bundle / relative_path)
-        frames.append(
-            {
-                "timestamp_seconds": timestamp,
-                "timestamp": label,
-                "path": relative_path.as_posix(),
-            }
-        )
+        frames.append(_frame_record(timestamp, relative_path))
 
     relative_contact_sheet = relative_directory / "contact-sheet.jpg"
     contact_sheet_layout = tools.create_contact_sheet(
@@ -199,8 +201,7 @@ def inspect_video_range(
         item for item in manifest.get("inspections", []) if item.get("id") != inspection_id
     ]
     manifest["inspections"] = existing + [inspection]
-    _write_json(bundle / "manifest.json", manifest)
-    (bundle / "report.md").write_text(_render_report(manifest), encoding="utf-8")
+    _persist_manifest(bundle, manifest)
     return {
         "analysis_id": manifest["analysis_id"],
         "bundle_path": str(bundle),
@@ -241,19 +242,14 @@ def extract_video_frame(
     relative_path = Path("frames") / f"detail-{label.replace(':', '-')}.jpg"
     tools = media_tools or MediaTools()
     tools.extract_frame(source, timestamp, bundle / relative_path)
-    frame = {
-        "timestamp_seconds": timestamp,
-        "timestamp": label,
-        "path": relative_path.as_posix(),
-    }
+    frame = _frame_record(timestamp, relative_path)
     existing = [
         item
         for item in manifest.get("detail_frames", [])
         if item.get("timestamp_seconds") != timestamp
     ]
     manifest["detail_frames"] = existing + [frame]
-    _write_json(bundle / "manifest.json", manifest)
-    (bundle / "report.md").write_text(_render_report(manifest), encoding="utf-8")
+    _persist_manifest(bundle, manifest)
     return {
         "analysis_id": manifest["analysis_id"],
         "bundle_path": str(bundle),
@@ -312,6 +308,11 @@ def _resolve_bundle(bundle_path: Path) -> Path:
     return candidate
 
 
+def default_output_root(video_path: Path) -> Path:
+    """Return the shared CLI/MCP output location for a source video."""
+    return video_path.expanduser().resolve().parent / "video-context"
+
+
 def _safe_name(value: str) -> str:
     return re.sub(r"[^A-Za-z0-9._-]+", "-", value).strip("-._").lower()
 
@@ -320,10 +321,20 @@ def _number_slug(value: float) -> str:
     return f"{value:g}".replace(".", "-")
 
 
-def _overview_timestamps(duration: float, interval: float, max_frames: int) -> List[float]:
+def _frame_record(timestamp: float, relative_path: Path) -> Dict[str, Any]:
+    return {
+        "timestamp_seconds": timestamp,
+        "timestamp": format_timestamp(timestamp),
+        "path": relative_path.as_posix(),
+    }
+
+
+def _overview_timestamps(
+    duration: float, interval: float, max_frames: int, min_frames: int = 1
+) -> List[float]:
     if duration <= 0:
         raise VideoContextError("video duration must be greater than zero")
-    count = min(max_frames, max(1, int(math.ceil(duration / interval))))
+    count = min(max_frames, max(min_frames, int(math.ceil(duration / interval))))
     last_timestamp = max(0.0, duration - min(0.05, duration / 10))
     if count == 1:
         return [round(last_timestamp / 2, 3)]
@@ -382,6 +393,11 @@ def _write_json(path: Path, value: Dict[str, Any]) -> None:
         json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
     temporary_path.replace(path)
+
+
+def _persist_manifest(bundle: Path, manifest: Dict[str, Any]) -> None:
+    _write_json(bundle / "manifest.json", manifest)
+    (bundle / "report.md").write_text(_render_report(manifest), encoding="utf-8")
 
 
 def _read_manifest(bundle: Path) -> Dict[str, Any]:

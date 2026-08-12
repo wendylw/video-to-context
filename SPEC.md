@@ -12,6 +12,9 @@ The first release exposes the same capabilities through two public seams:
 1. The `v2ctx` command-line interface.
 2. The `v2ctx-mcp` stdio MCP server.
 
+Host manifests for Codex, Claude, Gemini, and Kimi package the MCP seam for
+native discovery; they do not add separate runtime APIs.
+
 ## Required behavior
 
 - `v2ctx analyze VIDEO` probes the video and creates a context bundle containing
@@ -41,4 +44,3 @@ bundle; generated files must never overwrite the source video.
 - Remote video URLs or cloud uploads.
 - Editing, transcoding, or splitting the source video into playable clips.
 - A graphical user interface.
-

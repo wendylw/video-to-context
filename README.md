@@ -43,7 +43,8 @@ ln -s /absolute/path/to/video-to-context/v2ctx ~/.local/bin/v2ctx
 ln -s /absolute/path/to/video-to-context/v2ctx-mcp ~/.local/bin/v2ctx-mcp
 ```
 
-默认在当前目录的 `video-context/` 下创建 Context Bundle。常用命令：
+默认在源视频旁的 `video-context/` 下创建 Context Bundle；也可以用
+`--output` 指定其他目录。常用命令：
 
 ```bash
 ./v2ctx analyze recording.mp4 --preset general --json

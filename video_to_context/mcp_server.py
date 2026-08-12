@@ -8,8 +8,13 @@ from typing import Any, Dict, Optional
 
 from . import __version__
 from .core import (
+    DEFAULT_INSPECT_FPS,
+    DEFAULT_MAX_INSPECTION_FRAMES,
+    DEFAULT_PRESET,
+    PRESETS,
     VideoContextError,
     analyze_video,
+    default_output_root,
     extract_video_frame,
     get_video_overview,
     inspect_video_range,
@@ -46,8 +51,8 @@ TOOLS = [
                 },
                 "preset": {
                     "type": "string",
-                    "enum": ["general", "ui-debug"],
-                    "default": "general",
+                    "enum": sorted(PRESETS),
+                    "default": DEFAULT_PRESET,
                 },
                 "interval": {"type": "number", "exclusiveMinimum": 0},
                 "max_frames": {"type": "integer", "minimum": 1},
@@ -93,8 +98,16 @@ TOOLS = [
                     "type": ["number", "string"],
                     "description": "End in seconds or HH:MM:SS.mmm.",
                 },
-                "fps": {"type": "number", "exclusiveMinimum": 0, "default": 2},
-                "max_frames": {"type": "integer", "minimum": 1, "default": 120},
+                "fps": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "default": DEFAULT_INSPECT_FPS,
+                },
+                "max_frames": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "default": DEFAULT_MAX_INSPECTION_FRAMES,
+                },
             },
             "required": ["bundle", "start", "end"],
             "additionalProperties": False,
@@ -223,12 +236,12 @@ def _call_tool(name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
         output = (
             Path(output_value)
             if output_value
-            else source.expanduser().resolve().parent / "video-context"
+            else default_output_root(source)
         )
         result = analyze_video(
             source,
             output,
-            preset=arguments.get("preset", "general"),
+            preset=arguments.get("preset", DEFAULT_PRESET),
             interval=arguments.get("interval"),
             max_frames=arguments.get("max_frames"),
         )
@@ -243,8 +256,10 @@ def _call_tool(name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
             Path(_required(arguments, "bundle")),
             _time_value(_required(arguments, "start")),
             _time_value(_required(arguments, "end")),
-            float(arguments.get("fps", 2.0)),
-            max_frames=int(arguments.get("max_frames", 120)),
+            float(arguments.get("fps", DEFAULT_INSPECT_FPS)),
+            max_frames=int(
+                arguments.get("max_frames", DEFAULT_MAX_INSPECTION_FRAMES)
+            ),
         )
         return _tool_success(result, [Path(result["contact_sheet_path"])])
     if name == "get_frame":

@@ -6,9 +6,13 @@ from typing import List, Optional
 
 from . import __version__
 from .core import (
+    DEFAULT_INSPECT_FPS,
+    DEFAULT_MAX_INSPECTION_FRAMES,
+    DEFAULT_PRESET,
     PRESETS,
     VideoContextError,
     analyze_video,
+    default_output_root,
     extract_video_frame,
     get_video_overview,
     inspect_video_range,
@@ -26,10 +30,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     analyze = subcommands.add_parser("analyze", help="create a context bundle")
     analyze.add_argument("video", type=Path)
-    analyze.add_argument(
-        "--output", type=Path, default=Path.cwd() / "video-context", help="bundle root"
-    )
-    analyze.add_argument("--preset", choices=sorted(PRESETS), default="general")
+    analyze.add_argument("--output", type=Path, help="bundle root")
+    analyze.add_argument("--preset", choices=sorted(PRESETS), default=DEFAULT_PRESET)
     analyze.add_argument("--interval", type=float)
     analyze.add_argument("--max-frames", type=int)
     analyze.add_argument("--json", action="store_true", help="print machine-readable output")
@@ -42,8 +44,10 @@ def build_parser() -> argparse.ArgumentParser:
     inspect.add_argument("bundle", type=Path)
     inspect.add_argument("--from", dest="start", required=True)
     inspect.add_argument("--to", dest="end", required=True)
-    inspect.add_argument("--fps", type=float, default=2.0)
-    inspect.add_argument("--max-frames", type=int, default=120)
+    inspect.add_argument("--fps", type=float, default=DEFAULT_INSPECT_FPS)
+    inspect.add_argument(
+        "--max-frames", type=int, default=DEFAULT_MAX_INSPECTION_FRAMES
+    )
     inspect.add_argument("--json", action="store_true", help="print machine-readable output")
 
     frame = subcommands.add_parser("frame", help="extract one exact video frame")
@@ -60,7 +64,7 @@ def main(arguments: Optional[List[str]] = None) -> int:
         if args.command == "analyze":
             result = analyze_video(
                 args.video,
-                args.output,
+                args.output or default_output_root(args.video),
                 preset=args.preset,
                 interval=args.interval,
                 max_frames=args.max_frames,

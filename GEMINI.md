@@ -12,5 +12,5 @@ Use the `video-to-context` MCP tools for local videos and screen recordings.
 
 Keep observed evidence separate from inference and cite timestamps. Never claim
 that speech or on-screen text was transcribed: v0.1 does not include OCR or
-speech-to-text. Processing is local; do not upload the source or generated
-frames unless the user explicitly requests it.
+speech-to-text. Processing is local; never upload the source or generated
+frames.
