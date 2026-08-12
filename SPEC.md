@@ -42,6 +42,8 @@ bundle; generated files must never overwrite the source video.
 
 - The GitHub repository can be run without a manual clone through `uvx`, and
   exposes both `v2ctx` and `v2ctx-mcp` package entry points.
+- `v2ctx-mcp --check` exercises MCP initialization and tool discovery, then
+  prints the four available tool names for deterministic installation checks.
 - A checkout can install self-locating CLI links into a caller-selected bin
   directory. Installation must refuse to overwrite unrelated files.
 - Uninstallation removes only links created for this checkout; it never deletes

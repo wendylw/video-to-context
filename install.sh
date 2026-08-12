@@ -2,7 +2,7 @@
 set -eu
 
 project_root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-bin_dir=${V2CTX_BIN_DIR:-"${HOME:?HOME is not set}/.local/bin"}
+bin_dir=${V2CTX_BIN_DIR:-}
 
 usage() {
     echo "usage: ./install.sh [--bin-dir PATH]"
@@ -29,6 +29,14 @@ while [ "$#" -gt 0 ]; do
             ;;
     esac
 done
+
+if [ -z "$bin_dir" ]; then
+    if [ -z "${HOME:-}" ]; then
+        echo "error: HOME is not set; pass --bin-dir PATH" >&2
+        exit 1
+    fi
+    bin_dir=$HOME/.local/bin
+fi
 
 if ! command -v python3 >/dev/null 2>&1; then
     echo "error: python3 was not found (Python 3.9 or newer is required)" >&2

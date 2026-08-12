@@ -14,6 +14,7 @@ class InstallationTest(unittest.TestCase):
             workspace = Path(temp_dir)
             bin_dir = workspace / "bin"
             environment = self._environment_with_fake_media_tools(workspace)
+            environment.pop("HOME", None)
 
             install = subprocess.run(
                 [str(PROJECT_ROOT / "install.sh"), "--bin-dir", str(bin_dir)],
@@ -55,6 +56,24 @@ class InstallationTest(unittest.TestCase):
             self.assertFalse((bin_dir / "v2ctx-mcp").exists())
             self.assertTrue((PROJECT_ROOT / "v2ctx").is_file())
             self.assertTrue((PROJECT_ROOT / "v2ctx-mcp").is_file())
+
+    def test_help_does_not_require_a_home_directory(self) -> None:
+        environment = os.environ.copy()
+        environment.pop("HOME", None)
+
+        for script_name in ("install.sh", "uninstall.sh"):
+            result = subprocess.run(
+                [str(PROJECT_ROOT / script_name), "--help"],
+                cwd=PROJECT_ROOT.parent,
+                env=environment,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("--bin-dir PATH", result.stdout)
 
     def test_install_refuses_to_overwrite_an_unrelated_command(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

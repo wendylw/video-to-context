@@ -4,7 +4,7 @@ import base64
 import json
 from pathlib import Path
 import sys
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from . import __version__
 from .core import (
@@ -138,7 +138,51 @@ TOOLS = [
 ]
 
 
-def main() -> int:
+def main(arguments: Optional[List[str]] = None) -> int:
+    command_arguments = list(arguments) if arguments is not None else sys.argv[1:]
+    if command_arguments == ["--check"]:
+        initialize_response = _handle_message(
+            {
+                "jsonrpc": "2.0",
+                "id": "check-initialize",
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": DEFAULT_PROTOCOL_VERSION,
+                    "capabilities": {},
+                    "clientInfo": {"name": "v2ctx-mcp-check", "version": __version__},
+                },
+            }
+        )
+        tools_response = _handle_message(
+            {
+                "jsonrpc": "2.0",
+                "id": "check-tools",
+                "method": "tools/list",
+                "params": {},
+            }
+        )
+        if initialize_response is None or tools_response is None:
+            print("MCP self-check failed", file=sys.stderr)
+            return 1
+        server_info = initialize_response["result"]["serverInfo"]
+        print(
+            json.dumps(
+                {
+                    "server": server_info["name"],
+                    "version": server_info["version"],
+                    "protocol": initialize_response["result"]["protocolVersion"],
+                    "tools": [
+                        tool["name"] for tool in tools_response["result"]["tools"]
+                    ],
+                },
+                ensure_ascii=False,
+            )
+        )
+        return 0
+    if command_arguments:
+        print("usage: v2ctx-mcp [--check]", file=sys.stderr)
+        return 2
+
     for line in sys.stdin:
         try:
             message = json.loads(line)

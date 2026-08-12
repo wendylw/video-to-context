@@ -2,7 +2,8 @@
 
 把本地视频转换成带时间戳、可供 AI 渐进读取的 Context Bundle。适合分析产品录屏、定位短暂报错，以及给无法直接观看视频的模型提供可验证的视觉证据。
 
-视频和抽取出的画面默认只在本机处理，不会上传。
+视频探测和抽帧都在本机完成，本工具自身不执行网络上传。通过 MCP 把图片交给
+AI 宿主后，宿主可能按自身数据策略发送给远程模型；敏感内容请先确认宿主政策。
 
 ## 当前能力
 
@@ -54,8 +55,8 @@ uvx --from git+https://github.com/wendylw/video-to-context \
 ```
 
 这不需要 `git clone` 或把项目长期安装到 Python 环境。`uvx` 会在首次运行时
-自动下载代码到本机缓存；视频和抽取帧仍只在本机处理。`ffmpeg` / `ffprobe`
-依然需要预先安装。
+自动下载代码到本机缓存；视频探测和抽帧由本工具在本机执行。`ffmpeg` /
+`ffprobe` 依然需要预先安装。
 
 直接注册远程仓库提供的 MCP Server：
 
@@ -68,6 +69,10 @@ codex mcp add video-to-context -- \
 claude mcp add --scope user video-to-context -- \
   uvx --from git+https://github.com/wendylw/video-to-context v2ctx-mcp
 ```
+
+MCP Server 自身不会联网，但会把选中的 JPEG 帧作为工具结果交给 AI 宿主。
+这些图片之后是否发送给远程模型取决于 Codex、Claude、Gemini 或 Kimi 的数据
+策略；敏感录屏应先确认所用宿主的政策。
 
 Gemini CLI 和 Kimi Code 可以直接安装 GitHub 仓库中的原生包装：
 
@@ -94,10 +99,11 @@ gemini extensions install https://github.com/wendylw/video-to-context
 先确认操作系统、Python >= 3.9、git、ffmpeg、ffprobe、uv，以及当前 AI 宿主。
 优先使用 README 的 GitHub + uvx 方式为当前宿主安装 video-to-context；
 如果宿主支持 GitHub extension/plugin，则使用对应的原生安装方式。
-不要上传任何视频或生成帧，不要覆盖已有 MCP 配置，不要修改无关全局配置。
+不要把源视频或生成帧另行上传到外部服务，不要覆盖已有 MCP 配置，
+不要修改无关全局配置。
 遇到同名配置或需要安装系统依赖时先征求我的同意。
-完成后验证 v2ctx --version，并确认 MCP 能列出 analyze_video、
-get_video_overview、inspect_time_range、get_frame 四个工具。
+完成后执行 README 中完整的 uvx 版本检查和 v2ctx-mcp --check，确认 MCP
+列出 analyze_video、get_video_overview、inspect_time_range、get_frame 四个工具。
 最后汇报执行过的命令、修改的配置和卸载方法。
 ```
 
@@ -229,14 +235,27 @@ gemini extensions link /absolute/path/to/video-to-context
 
 ### 验证和卸载宿主配置
 
+先直接验证 GitHub 包和 MCP 工具清单：
+
+```bash
+uvx --from git+https://github.com/wendylw/video-to-context \
+  v2ctx --version
+uvx --from git+https://github.com/wendylw/video-to-context \
+  v2ctx-mcp --check
+```
+
+第二条命令应输出包含四个工具名的 JSON。它直接启动与宿主配置相同的 MCP
+入口，因此可以区分“包或 MCP 入口有问题”和“宿主尚未加载配置”。再检查宿主
+的注册/连接状态：
+
 ```bash
 codex mcp list
 claude mcp list
 gemini extensions list
 ```
 
-Kimi Code 使用 `/plugins list` 查看状态。正常连接后应能看到四个 MCP 工具：
-`analyze_video`、`get_video_overview`、`inspect_time_range`、`get_frame`。
+Kimi Code 使用 `/plugins list` 查看状态。若直接检查通过但宿主未连接，请重启
+宿主或开启新会话。
 
 移除免 clone 的宿主配置：
 
@@ -283,8 +302,8 @@ python3 -m unittest discover -s tests -v
   `ffprobe -version` 都能运行。
 - `uvx: command not found`：按 [uv 官方安装文档](https://docs.astral.sh/uv/getting-started/installation/)
   安装 uv，或改用持久本地安装方式。
-- MCP 显示未连接：先在终端单独运行免 clone 的 `v2ctx --version` 命令，确认
-  GitHub 可访问，再重启 AI 客户端。
+- MCP 显示未连接：先运行“验证和卸载宿主配置”中的两条完整 `uvx` 命令，
+  确认 GitHub 包与 MCP 工具清单正常，再重启 AI 客户端。
 - AI 看不到刚安装的工具：Claude/Gemini/Kimi 通常需要重启、`/reload` 或开启
   新会话。
 - 视频路径错误：MCP 工具接收本机绝对路径；远程服务器或网页 AI 无法读取你

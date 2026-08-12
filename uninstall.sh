@@ -2,7 +2,7 @@
 set -eu
 
 project_root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-bin_dir=${V2CTX_BIN_DIR:-"${HOME:?HOME is not set}/.local/bin"}
+bin_dir=${V2CTX_BIN_DIR:-}
 
 usage() {
     echo "usage: ./uninstall.sh [--bin-dir PATH]"
@@ -29,6 +29,14 @@ while [ "$#" -gt 0 ]; do
             ;;
     esac
 done
+
+if [ -z "$bin_dir" ]; then
+    if [ -z "${HOME:-}" ]; then
+        echo "error: HOME is not set; pass --bin-dir PATH" >&2
+        exit 1
+    fi
+    bin_dir=$HOME/.local/bin
+fi
 
 for name in v2ctx v2ctx-mcp; do
     source_path=$project_root/$name

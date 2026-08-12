@@ -52,7 +52,7 @@ For distribution changes, also verify both package entry points:
 
 ```bash
 uvx --from . v2ctx --version
-uvx --from . v2ctx-mcp
+uvx --from . v2ctx-mcp --check
 ```
 
 For media changes, also generate a synthetic video under `/private/tmp` with

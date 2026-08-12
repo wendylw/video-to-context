@@ -34,6 +34,27 @@ class DistributionTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("Turn video into timestamped context", result.stdout)
 
+    def test_mcp_launcher_check_lists_the_four_tools(self) -> None:
+        result = subprocess.run(
+            [str(PROJECT_ROOT / "v2ctx-mcp"), "--check"],
+            cwd=PROJECT_ROOT.parent,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            json.loads(result.stdout)["tools"],
+            [
+                "analyze_video",
+                "get_video_overview",
+                "inspect_time_range",
+                "get_frame",
+            ],
+        )
+
     def test_native_manifests_all_declare_video_to_context(self) -> None:
         manifest_paths = [
             PROJECT_ROOT / ".codex-plugin" / "plugin.json",
@@ -51,8 +72,9 @@ class DistributionTest(unittest.TestCase):
 
         required_phrases = [
             "uvx --from git+https://github.com/wendylw/video-to-context",
+            "v2ctx-mcp --check",
             "交给 AI 自动安装",
-            "不要上传任何视频或生成帧",
+            "不要把源视频或生成帧另行上传到外部服务",
             "./install.sh",
             "./uninstall.sh",
             "codex mcp remove video-to-context",
