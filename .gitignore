@@ -1,0 +1,14 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.venv/
+build/
+dist/
+*.egg-info/
+
+# Local videos and generated context may contain private material.
+*.mp4
+*.mov
+*.mkv
+*.webm
+video-context/

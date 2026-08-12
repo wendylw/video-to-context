@@ -1,0 +1,22 @@
+{
+  "name": "video-to-context",
+  "displayName": "Video to Context",
+  "version": "0.1.0",
+  "description": "Turn local video into timestamped, AI-readable context.",
+  "author": {
+    "name": "Video to Context contributors"
+  },
+  "license": "MIT",
+  "keywords": [
+    "video",
+    "screen-recording",
+    "debugging",
+    "mcp",
+    "multimodal"
+  ],
+  "mcpServers": {
+    "video-to-context": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/v2ctx-mcp"
+    }
+  }
+}

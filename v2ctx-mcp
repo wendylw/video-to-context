@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+
+project_root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+PYTHONPATH="${project_root}${PYTHONPATH:+:${PYTHONPATH}}"
+export PYTHONPATH
+
+exec python3 -m video_to_context.mcp_server

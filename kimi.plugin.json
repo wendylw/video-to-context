@@ -1,0 +1,25 @@
+{
+  "name": "video-to-context",
+  "version": "0.1.0",
+  "description": "Turn local video into timestamped, AI-readable context.",
+  "license": "MIT",
+  "keywords": [
+    "video",
+    "screen-recording",
+    "debugging",
+    "mcp",
+    "multimodal"
+  ],
+  "skills": "./skills/",
+  "mcpServers": {
+    "video-to-context": {
+      "command": "./v2ctx-mcp",
+      "cwd": "."
+    }
+  },
+  "interface": {
+    "displayName": "Video to Context",
+    "shortDescription": "Turn video into timestamped AI context",
+    "longDescription": "Analyze local videos through metadata, contact sheets, and progressively denser timestamped frames."
+  }
+}

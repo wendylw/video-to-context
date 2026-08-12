@@ -1,0 +1,4 @@
+interface:
+  display_name: "Video to Context"
+  short_description: "Analyze local videos as timestamped AI context"
+  default_prompt: "Use $video-to-context to analyze this screen recording and identify the likely problem."

@@ -1,0 +1,12 @@
+{
+  "name": "video-to-context",
+  "version": "0.1.0",
+  "description": "Turn local video into timestamped, AI-readable context.",
+  "mcpServers": {
+    "video-to-context": {
+      "command": "${extensionPath}/v2ctx-mcp",
+      "cwd": "${extensionPath}"
+    }
+  },
+  "contextFileName": "GEMINI.md"
+}
