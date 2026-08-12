@@ -46,6 +46,22 @@ class DistributionTest(unittest.TestCase):
         self.assertEqual([item["name"] for item in manifests], ["video-to-context"] * 4)
         self.assertEqual([item["version"] for item in manifests], ["0.1.0"] * 4)
 
+    def test_readme_contains_an_agent_install_contract_and_lifecycle_commands(self) -> None:
+        readme = (PROJECT_ROOT / "README.md").read_text(encoding="utf-8")
+
+        required_phrases = [
+            "uvx --from git+https://github.com/wendylw/video-to-context",
+            "交给 AI 自动安装",
+            "不要上传任何视频或生成帧",
+            "./install.sh",
+            "./uninstall.sh",
+            "codex mcp remove video-to-context",
+            "gemini extensions uninstall video-to-context",
+            "/plugins remove video-to-context",
+        ]
+        for phrase in required_phrases:
+            self.assertIn(phrase, readme)
+
 
 if __name__ == "__main__":
     unittest.main()

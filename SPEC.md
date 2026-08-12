@@ -38,6 +38,18 @@ Each analysis directory contains durable relative paths so the bundle can be
 moved as a unit. Re-running analysis for unchanged input may reuse the same
 bundle; generated files must never overwrite the source video.
 
+## Distribution and installation
+
+- The GitHub repository can be run without a manual clone through `uvx`, and
+  exposes both `v2ctx` and `v2ctx-mcp` package entry points.
+- A checkout can install self-locating CLI links into a caller-selected bin
+  directory. Installation must refuse to overwrite unrelated files.
+- Uninstallation removes only links created for this checkout; it never deletes
+  the checkout, videos, context bundles, or unrelated configuration.
+- The README gives an AI coding agent a deterministic install, verification,
+  update, and uninstall workflow without granting permission to upload media or
+  silently change unrelated global configuration.
+
 ## Non-goals for v0.1
 
 - Speech-to-text and OCR engines.

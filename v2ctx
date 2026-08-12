@@ -1,7 +1,15 @@
 #!/bin/sh
 set -eu
 
-project_root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+script_path=$0
+while [ -L "$script_path" ]; do
+    link_target=$(readlink "$script_path")
+    case "$link_target" in
+        /*) script_path=$link_target ;;
+        *) script_path=$(dirname -- "$script_path")/$link_target ;;
+    esac
+done
+project_root=$(CDPATH= cd -- "$(dirname -- "$script_path")" && pwd)
 PYTHONPATH="${project_root}${PYTHONPATH:+:${PYTHONPATH}}"
 export PYTHONPATH
 

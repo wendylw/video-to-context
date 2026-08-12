@@ -15,6 +15,8 @@ editor, archive, OCR engine, or transcription service.
 - `video_to_context/cli.py` — `v2ctx` command-line adapter
 - `video_to_context/mcp_server.py` — dependency-free stdio MCP adapter
 - `v2ctx` / `v2ctx-mcp` — self-locating launchers
+- `pyproject.toml` — package metadata and `uvx` entry points
+- `install.sh` / `uninstall.sh` — safe local command-link lifecycle
 - `skills/video-to-context/` — shared Agent Skill
 - `.codex-plugin/`, `.claude-plugin/`, `kimi.plugin.json`, and
   `gemini-extension.json` — host-specific packaging
@@ -26,6 +28,9 @@ editor, archive, OCR engine, or transcription service.
 - Treat `ffmpeg` and `ffprobe` as explicit external executables.
 - Never upload videos or generated frames.
 - Never modify or delete a source video.
+- Installation must not overwrite unrelated commands or silently modify AI
+  client configuration; uninstallation removes only links owned by the current
+  checkout.
 - Keep generated artifact paths relative inside `manifest.json`; source paths
   may remain absolute so later inspection can reopen the original video.
 - Preserve progressive disclosure: overview first, then a narrow inspected
@@ -41,6 +46,13 @@ Run the full standard-library suite:
 
 ```bash
 python3 -m unittest discover -s tests -v
+```
+
+For distribution changes, also verify both package entry points:
+
+```bash
+uvx --from . v2ctx --version
+uvx --from . v2ctx-mcp
 ```
 
 For media changes, also generate a synthetic video under `/private/tmp` with

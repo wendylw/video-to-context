@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "video-to-context"
+dynamic = ["version"]
+description = "Turn local videos into timestamped context bundles for AI agents."
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Video to Context contributors" }]
+keywords = ["video", "mcp", "ai-agents", "ffmpeg", "screen-recording"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Multimedia :: Video",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/wendylw/video-to-context"
+Repository = "https://github.com/wendylw/video-to-context"
+Issues = "https://github.com/wendylw/video-to-context/issues"
+
+[project.scripts]
+v2ctx = "video_to_context.cli:main"
+v2ctx-mcp = "video_to_context.mcp_server:main"
+
+[tool.setuptools]
+packages = ["video_to_context"]
+
+[tool.setuptools.dynamic]
+version = { attr = "video_to_context.__version__" }
