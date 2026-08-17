@@ -42,6 +42,12 @@ bundle; generated files must never overwrite the source video.
 
 - The GitHub repository can be run without a manual clone through `uvx`, and
   exposes both `v2ctx` and `v2ctx-mcp` package entry points.
+- The repository exposes a Codex marketplace whose installable plugin bundles
+  the Agent Skill and launches the GitHub `v2ctx-mcp` entry point through
+  `uvx`; registering the MCP server alone remains an explicit fallback.
+- Installed host guidance should route natural requests about a referenced
+  local video to the workflow without requiring the user to name the Skill or
+  MCP tools.
 - `v2ctx-mcp --check` exercises MCP initialization and tool discovery, then
   prints the four available tool names for deterministic installation checks.
 - A checkout can install self-locating CLI links into a caller-selected bin

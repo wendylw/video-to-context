@@ -1,0 +1,35 @@
+{
+  "name": "video-to-context",
+  "version": "0.1.0",
+  "description": "Turn local video into timestamped, AI-readable context.",
+  "author": {
+    "name": "Video to Context contributors"
+  },
+  "license": "MIT",
+  "keywords": [
+    "video",
+    "screen-recording",
+    "debugging",
+    "mcp",
+    "multimodal"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Video to Context",
+    "shortDescription": "Turn video into timestamped AI context.",
+    "longDescription": "Analyze a local video without uploading it. Create a portable context bundle with metadata, timestamped frames, a contact sheet, and Markdown; then inspect only the ranges that matter.",
+    "developerName": "Video to Context contributors",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Analyze this screen recording and identify the likely problem",
+      "Create an AI-readable overview of this local video",
+      "Inspect the suspicious moment in this video frame by frame"
+    ]
+  }
+}

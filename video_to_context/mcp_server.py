@@ -31,6 +31,13 @@ LEGACY_PROTOCOL_VERSIONS = {
 }
 DEFAULT_PROTOCOL_VERSION = "2025-11-25"
 MODERN_PROTOCOL_VERSION = "2026-07-28"
+SERVER_INSTRUCTIONS = (
+    "Use these tools automatically when a user provides or references a local "
+    "video or screen recording and asks to watch, inspect, debug, summarize, "
+    "compare, or locate a moment, even if they do not name a tool. Call "
+    "analyze_video first, read get_video_overview, then inspect only suspicious "
+    "ranges or exact frames to control context size."
+)
 
 
 TOOLS = [
@@ -38,7 +45,10 @@ TOOLS = [
         "name": "analyze_video",
         "title": "Analyze local video",
         "description": (
-            "Create a local AI-readable context bundle with video metadata, "
+            "Use automatically as the first step when a user provides or references "
+            "a local video or screen recording and asks to watch, inspect, debug, "
+            "summarize, compare, or locate a moment, even when they do not name this "
+            "tool. Create a local AI-readable context bundle with video metadata, "
             "timestamped overview frames, a contact sheet, and a Markdown report."
         ),
         "inputSchema": {
@@ -216,10 +226,7 @@ def _handle_message(message: Dict[str, Any]) -> Optional[Dict[str, Any]]:
                         "version": __version__,
                     }
                 },
-                "instructions": (
-                    "Call analyze_video first, read get_video_overview, then inspect "
-                    "only suspicious ranges or exact frames to control context size."
-                ),
+                "instructions": SERVER_INSTRUCTIONS,
                 "ttlMs": 3_600_000,
                 "cacheScope": "public",
             },
@@ -240,10 +247,7 @@ def _handle_message(message: Dict[str, Any]) -> Optional[Dict[str, Any]]:
                     "version": __version__,
                     "description": "Turn local video into timestamped context for AI agents.",
                 },
-                "instructions": (
-                    "Call analyze_video first, read get_video_overview, then inspect "
-                    "only suspicious ranges or exact frames to control context size."
-                ),
+                "instructions": SERVER_INSTRUCTIONS,
             },
         )
     if method == "ping":
