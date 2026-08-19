@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "video-to-context": {
+      "title": "Video to Context",
+      "description": "Turn local video into timestamped, AI-readable context.",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/wendylw/video-to-context",
+        "v2ctx-mcp"
+      ]
+    }
+  }
+}

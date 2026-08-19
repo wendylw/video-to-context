@@ -18,6 +18,8 @@ editor, archive, OCR engine, or transcription service.
 - `pyproject.toml` — package metadata and `uvx` entry points
 - `install.sh` / `uninstall.sh` — safe local command-link lifecycle
 - `skills/video-to-context/` — shared Agent Skill
+- `.agents/plugins/marketplace.json` and `plugins/video-to-context/` —
+  installable Codex marketplace package
 - `.codex-plugin/`, `.claude-plugin/`, `kimi.plugin.json`, and
   `gemini-extension.json` — host-specific packaging
 - `SPEC.md` — v0.1 behavioral contract
@@ -35,6 +37,8 @@ editor, archive, OCR engine, or transcription service.
   may remain absolute so later inspection can reopen the original video.
 - Preserve progressive disclosure: overview first, then a narrow inspected
   range, then an exact frame.
+- Keep the root and packaged Codex copies of `plugin.json`, `SKILL.md`, and
+  `agents/openai.yaml` byte-for-byte synchronized.
 - Do not claim OCR or speech transcription exists until it is implemented and
   validated against real input.
 - Video files and generated bundles may contain private material and must not be
@@ -63,6 +67,7 @@ Validate packaging changes with:
 ```bash
 python3 /path/to/skill-creator/scripts/quick_validate.py skills/video-to-context
 python3 /path/to/plugin-creator/scripts/validate_plugin.py .
+python3 /path/to/plugin-creator/scripts/validate_plugin.py plugins/video-to-context
 claude plugin validate .
 gemini extensions validate .
 ```

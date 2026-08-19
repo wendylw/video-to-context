@@ -1,6 +1,8 @@
 # Video to Context
 
-Use the `video-to-context` MCP tools for local videos and screen recordings.
+Automatically use the `video-to-context` MCP tools when the user provides or
+references a local video or screen recording and asks to inspect, debug,
+summarize, or locate a moment. Do not wait for the user to name the tools.
 
 1. Call `analyze_video` first. Use `ui-debug` for product recordings and
    `general` for other video.

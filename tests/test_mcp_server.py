@@ -73,6 +73,8 @@ class McpServerTest(unittest.TestCase):
         )
         self.assertEqual(initialize["result"]["protocolVersion"], "2025-11-25")
         self.assertEqual(initialize["result"]["capabilities"], {"tools": {}})
+        self.assertIn("automatically", initialize["result"]["instructions"])
+        self.assertIn("local video", initialize["result"]["instructions"])
 
         self._notify(
             server,
@@ -90,6 +92,15 @@ class McpServerTest(unittest.TestCase):
                 "inspect_time_range",
                 "get_frame",
             ],
+        )
+        analyze_tool = next(
+            tool
+            for tool in tools["result"]["tools"]
+            if tool["name"] == "analyze_video"
+        )
+        self.assertIn("Use automatically", analyze_tool["description"])
+        self.assertIn(
+            "even when they do not name this tool", analyze_tool["description"]
         )
 
     def test_analyze_video_returns_structured_paths_and_a_contact_sheet_image(self) -> None:

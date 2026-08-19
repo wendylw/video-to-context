@@ -21,7 +21,8 @@ v0.1 暂不包含 OCR 和语音转录；输出中不会假装已经识别画面�
 - macOS 或 Linux
 - Python 3.9 或更新版本，仅使用标准库
 - `ffmpeg` 与 `ffprobe`
-- 从 GitHub 安装时需要 `git` 和网络连接
+- Codex 完整插件和免 clone 运行需要
+  [uv](https://docs.astral.sh/uv/)；从 GitHub 安装还需要 `git` 和网络连接
 
 macOS 可以使用 Homebrew 安装媒体工具：
 
@@ -41,13 +42,31 @@ sudo apt install ffmpeg
 ```bash
 python3 --version
 git --version
+uvx --version
 ffmpeg -version
 ffprobe -version
 ```
 
 ## 最快使用：无需手动下载仓库
 
-如果已经安装 [uv](https://docs.astral.sh/uv/)，可以直接从 GitHub 运行：
+### Codex 完整插件（推荐）
+
+完整插件会同时安装 Agent Skill 和 MCP Server。Skill 告诉 Codex 在用户自然地
+提出“查看录屏、定位报错、总结视频、寻找某个瞬间”时主动调用工具，不要求用户
+先说出 `video-to-context` 或工具名：
+
+```bash
+codex plugin marketplace add wendylw/video-to-context
+codex plugin add video-to-context@video-to-context
+codex plugin list
+```
+
+安装后开启一个新会话，使 Codex 重新加载 Skill 和 MCP 工具。仅执行
+`codex mcp add` 不会安装 Skill，也不会让插件出现在 `codex plugin list` 中。
+
+### 直接运行 CLI
+
+如果已经安装 `uv`，可以直接从 GitHub 运行：
 
 ```bash
 uvx --from git+https://github.com/wendylw/video-to-context \
@@ -58,10 +77,12 @@ uvx --from git+https://github.com/wendylw/video-to-context \
 自动下载代码到本机缓存；视频探测和抽帧由本工具在本机执行。`ffmpeg` /
 `ffprobe` 依然需要预先安装。
 
-直接注册远程仓库提供的 MCP Server：
+### 只注册 MCP Server
+
+不支持完整插件，或者明确只需要 MCP 工具时，可以注册远程入口：
 
 ```bash
-# Codex
+# Codex（仅 MCP，不加载 Agent Skill）
 codex mcp add video-to-context -- \
   uvx --from git+https://github.com/wendylw/video-to-context v2ctx-mcp
 
@@ -97,8 +118,8 @@ gemini extensions install https://github.com/wendylw/video-to-context
 ```text
 请阅读 https://github.com/wendylw/video-to-context 的 README。
 先确认操作系统、Python >= 3.9、git、ffmpeg、ffprobe、uv，以及当前 AI 宿主。
-优先使用 README 的 GitHub + uvx 方式为当前宿主安装 video-to-context；
-如果宿主支持 GitHub extension/plugin，则使用对应的原生安装方式。
+Codex 必须优先使用 README 中的 marketplace + plugin add 完整安装方式；
+其他宿主优先使用对应的原生 extension/plugin，无法使用时再只注册 MCP。
 不要把源视频或生成帧另行上传到外部服务，不要覆盖已有 MCP 配置，
 不要修改无关全局配置。
 遇到同名配置或需要安装系统依赖时先征求我的同意。
@@ -201,12 +222,21 @@ MCP Server 使用 stdio：
 
 仓库同时包含各宿主的原生入口：
 
-- Codex：`.codex-plugin/plugin.json` 和 `.mcp.json`
+- Codex：`.agents/plugins/marketplace.json` 和
+  `plugins/video-to-context/` 中的完整插件包
 - Claude Code：`.claude-plugin/plugin.json`、`.mcp.json` 和 `skills/`
 - Kimi Code：`kimi.plugin.json`
 - Gemini CLI：`gemini-extension.json` 和 `GEMINI.md`
 
-使用本地 checkout 时，Codex 可以直接注册 MCP 入口：
+使用本地 checkout 开发 Codex 插件时，把 checkout 注册为 marketplace，再安装
+其中的插件：
+
+```bash
+codex plugin marketplace add /absolute/path/to/video-to-context
+codex plugin add video-to-context@video-to-context
+```
+
+如果只想调试 MCP 入口而不加载 Skill，可以直接注册：
 
 ```bash
 codex mcp add video-to-context -- /absolute/path/to/video-to-context/v2ctx-mcp
@@ -245,10 +275,11 @@ uvx --from git+https://github.com/wendylw/video-to-context \
 ```
 
 第二条命令应输出包含四个工具名的 JSON。它直接启动与宿主配置相同的 MCP
-入口，因此可以区分“包或 MCP 入口有问题”和“宿主尚未加载配置”。再检查宿主
-的注册/连接状态：
+入口，因此可以区分“包或 MCP 入口有问题”和“宿主尚未加载配置”。再检查完整
+插件或 MCP-only 配置的注册状态：
 
 ```bash
+codex plugin list
 codex mcp list
 claude mcp list
 gemini extensions list
@@ -260,6 +291,9 @@ Kimi Code 使用 `/plugins list` 查看状态。若直接检查通过但宿主�
 移除免 clone 的宿主配置：
 
 ```bash
+codex plugin remove video-to-context@video-to-context
+codex plugin marketplace remove video-to-context
+# 如果安装的是 MCP-only 配置：
 codex mcp remove video-to-context
 claude mcp remove --scope user video-to-context
 gemini extensions uninstall video-to-context
@@ -270,6 +304,8 @@ Kimi Code 使用 `/plugins remove video-to-context`，随后 `/reload`。
 刷新 GitHub + `uvx` 缓存到最新代码：
 
 ```bash
+codex plugin marketplace upgrade video-to-context
+codex plugin add video-to-context@video-to-context
 uvx --refresh --from git+https://github.com/wendylw/video-to-context \
   v2ctx --version
 ```
@@ -302,10 +338,12 @@ python3 -m unittest discover -s tests -v
   `ffprobe -version` 都能运行。
 - `uvx: command not found`：按 [uv 官方安装文档](https://docs.astral.sh/uv/getting-started/installation/)
   安装 uv，或改用持久本地安装方式。
+- `codex plugin list` 找不到插件：`.codex-plugin/plugin.json` 本身不会被自动
+  扫描；先执行本页的 `codex plugin marketplace add`，再执行 `codex plugin add`。
 - MCP 显示未连接：先运行“验证和卸载宿主配置”中的两条完整 `uvx` 命令，
   确认 GitHub 包与 MCP 工具清单正常，再重启 AI 客户端。
-- AI 看不到刚安装的工具：Claude/Gemini/Kimi 通常需要重启、`/reload` 或开启
-  新会话。
+- AI 看不到刚安装的工具或不会主动调用：确认安装的是完整插件而不只是 MCP；
+  Codex 需开启新会话，Claude/Gemini/Kimi 需重启、`/reload` 或开启新会话。
 - 视频路径错误：MCP 工具接收本机绝对路径；远程服务器或网页 AI 无法读取你
   电脑上的路径。
 - 隐私边界：工具不会主动上传内容，但 AI 宿主如何处理工具返回的图片取决于

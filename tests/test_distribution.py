@@ -67,6 +67,90 @@ class DistributionTest(unittest.TestCase):
         self.assertEqual([item["name"] for item in manifests], ["video-to-context"] * 4)
         self.assertEqual([item["version"] for item in manifests], ["0.1.0"] * 4)
 
+    def test_codex_marketplace_packages_a_discoverable_plugin(self) -> None:
+        marketplace = json.loads(
+            (
+                PROJECT_ROOT / ".agents" / "plugins" / "marketplace.json"
+            ).read_text(encoding="utf-8")
+        )
+
+        self.assertEqual(marketplace["name"], "video-to-context")
+        self.assertEqual(marketplace["interface"]["displayName"], "Video to Context")
+        self.assertEqual(len(marketplace["plugins"]), 1)
+        entry = marketplace["plugins"][0]
+        self.assertEqual(entry["name"], "video-to-context")
+        self.assertEqual(
+            entry["source"],
+            {"source": "local", "path": "./plugins/video-to-context"},
+        )
+        self.assertEqual(
+            entry["policy"],
+            {"installation": "AVAILABLE", "authentication": "ON_INSTALL"},
+        )
+        self.assertEqual(entry["category"], "Productivity")
+
+        source_path = entry["source"]["path"]
+        self.assertTrue(source_path.startswith("./"))
+        plugin_root = PROJECT_ROOT / source_path[2:]
+        self.assertEqual(
+            (plugin_root / ".codex-plugin" / "plugin.json").read_text(
+                encoding="utf-8"
+            ),
+            (PROJECT_ROOT / ".codex-plugin" / "plugin.json").read_text(
+                encoding="utf-8"
+            ),
+        )
+        self.assertEqual(
+            (plugin_root / "skills" / "video-to-context" / "SKILL.md").read_text(
+                encoding="utf-8"
+            ),
+            (PROJECT_ROOT / "skills" / "video-to-context" / "SKILL.md").read_text(
+                encoding="utf-8"
+            ),
+        )
+        self.assertEqual(
+            (
+                plugin_root
+                / "skills"
+                / "video-to-context"
+                / "agents"
+                / "openai.yaml"
+            ).read_text(encoding="utf-8"),
+            (
+                PROJECT_ROOT
+                / "skills"
+                / "video-to-context"
+                / "agents"
+                / "openai.yaml"
+            ).read_text(encoding="utf-8"),
+        )
+
+        plugin_mcp = json.loads(
+            (plugin_root / ".mcp.json").read_text(encoding="utf-8")
+        )["mcpServers"]["video-to-context"]
+        self.assertEqual(plugin_mcp["command"], "uvx")
+        self.assertEqual(
+            plugin_mcp["args"],
+            [
+                "--from",
+                "git+https://github.com/wendylw/video-to-context",
+                "v2ctx-mcp",
+            ],
+        )
+
+    def test_skill_routes_natural_video_requests_without_an_explicit_name(
+        self,
+    ) -> None:
+        skill = (
+            PROJECT_ROOT / "skills" / "video-to-context" / "SKILL.md"
+        ).read_text(encoding="utf-8")
+        frontmatter = skill.split("---", 2)[1]
+
+        self.assertIn("Use automatically", frontmatter)
+        self.assertIn("even if the user does not name this skill", frontmatter)
+        for extension in ("MP4", "MOV", "MKV", "WebM"):
+            self.assertIn(extension, frontmatter)
+
     def test_readme_contains_an_agent_install_contract_and_lifecycle_commands(self) -> None:
         readme = (PROJECT_ROOT / "README.md").read_text(encoding="utf-8")
 
@@ -78,6 +162,9 @@ class DistributionTest(unittest.TestCase):
             "./install.sh",
             "./uninstall.sh",
             "codex mcp remove video-to-context",
+            "codex plugin marketplace add wendylw/video-to-context",
+            "codex plugin add video-to-context@video-to-context",
+            "codex plugin remove video-to-context@video-to-context",
             "gemini extensions uninstall video-to-context",
             "/plugins remove video-to-context",
         ]
